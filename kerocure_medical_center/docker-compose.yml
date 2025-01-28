@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    container_name: kerocure_postgres_db
+    environment:
+      - POSTGRES_USER=kerocure_admin
+      - POSTGRES_PASSWORD=kerocure_admin@123
+      - POSTGRES_DB=kerocure_db
+    ports:
+      - "5432:5432"   # Expose the PostgreSQL port (5432)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Persistent data storage
+
+volumes:
+  postgres_data:
+    driver: local
