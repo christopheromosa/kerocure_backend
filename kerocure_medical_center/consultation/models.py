@@ -7,8 +7,8 @@ class PhysicianNote(models.Model):
     visit = models.ForeignKey("visits.Visit", on_delete=models.CASCADE)
     triage = models.ForeignKey("triage.Triage", on_delete=models.SET_NULL, null=True)
     diagnosis = models.TextField()
-    prescription = models.JSONField()  # Storing prescriptions as JSON
-    lab_tests_ordered = models.JSONField()  # Storing lab tests ordered as JSON
+    prescription = models.JSONField(blank=True , null=True)  # Storing prescriptions as JSON
+    lab_tests_ordered = models.JSONField(blank=True, null=True)  # Storing lab tests ordered as JSON
     physician = models.ForeignKey("accounts.Staff", on_delete=models.SET_NULL, null=True)
     recorded_at = models.DateTimeField(auto_now_add=True)
 
