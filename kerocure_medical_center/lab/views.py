@@ -1,3 +1,11 @@
-from django.shortcuts import render
+from rest_framework.viewsets import ModelViewSet
+from .models import LabResult
+from .serializers import LabSerializer
 
-# Create your views here.
+
+class LabViewSet(ModelViewSet):
+    queryset = LabResult.objects.all()
+    serializer_class = LabSerializer
+
+    def perform_create(self, serializer):
+        serializer.save()
