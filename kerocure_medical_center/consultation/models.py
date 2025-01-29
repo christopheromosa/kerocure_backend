@@ -4,7 +4,7 @@ from django.db import models
 # Create your models here.
 class PhysicianNote(models.Model):
     note_id = models.AutoField(primary_key=True)
-    visit = models.ForeignKey("patients.Visit", on_delete=models.CASCADE)
+    visit = models.ForeignKey("visits.Visit", on_delete=models.CASCADE)
     triage = models.ForeignKey("triage.Triage", on_delete=models.SET_NULL, null=True)
     diagnosis = models.TextField()
     prescription = models.JSONField()  # Storing prescriptions as JSON

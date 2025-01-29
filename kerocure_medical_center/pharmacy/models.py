@@ -4,7 +4,7 @@ from django.db import models
 # Create your models here.
 class Medication(models.Model):
     medication_id = models.AutoField(primary_key=True)
-    visit = models.ForeignKey("patients.Visit", on_delete=models.CASCADE)
+    visit = models.ForeignKey("visits.Visit", on_delete=models.CASCADE)
     note = models.ForeignKey("consultation.PhysicianNote", on_delete=models.CASCADE)
     medication_name = models.CharField(max_length=255)
     quantity = models.IntegerField()

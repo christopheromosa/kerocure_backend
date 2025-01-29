@@ -1,10 +1,9 @@
 from django.db import models
 
 # Create your models here.
-
-
 class Staff(models.Model):
     ROLE_CHOICES = [
+        ("Triage", "Triage"),
         ("Doctor", "Doctor"),
         ("Nurse", "Nurse"),
         ("Lab Technician", "Lab Technician"),
@@ -31,3 +30,5 @@ class Staff(models.Model):
 
     class Meta:
         ordering = ["last_name", "first_name"]
+
+ 

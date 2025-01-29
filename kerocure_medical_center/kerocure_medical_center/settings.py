@@ -44,7 +44,9 @@ INSTALLED_APPS = [
     "lab",
     "pharmacy",
     "billing",
-    "accounts"
+    "accounts",
+    "visits"
+    
 ]
 
 MIDDLEWARE = [
@@ -123,6 +125,13 @@ USE_I18N = True
 
 USE_TZ = True
 
+REST_FRAMEWORK = {
+    "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",  # Standardized date format
+    "DEFAULT_RENDERER_CLASSES": (
+        "rest_framework.renderers.JSONRenderer",
+        'rest_framework.renderers.BrowsableAPIRenderer', 
+    ),
+}
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
