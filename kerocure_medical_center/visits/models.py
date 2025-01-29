@@ -1,8 +1,6 @@
 from django.db import models
 
 # Create your models here.
-
-
 class Visit(models.Model):
     visit_id = models.AutoField(primary_key=True)
     patient = models.ForeignKey("patients.Patient", on_delete=models.CASCADE)

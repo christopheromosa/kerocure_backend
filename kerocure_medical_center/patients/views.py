@@ -13,7 +13,8 @@ class PatientViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         patient = serializer.save()
-        Visit.objects.create(patient=patient,current_state="TRIAGE",next_state="CONSULTATION",total_cost=0)
+        if not Visit.objects.filter(patient=patient):
+         Visit.objects.create(patient=patient,current_state="TRIAGE",next_state="CONSULTATION",total_cost=0)
 
 
 
