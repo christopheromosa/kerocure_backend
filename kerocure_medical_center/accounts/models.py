@@ -10,7 +10,7 @@ class Staff(models.Model):
         ("Lab Technician", "Lab Technician"),
         ("Pharmacist", "Pharmacist"),
         ("Administrator", "Administrator"),
-        ("Other", "Other"),
+        ("Billing", "Billing"),
     ]
 
     first_name = models.CharField(max_length=100)
@@ -32,5 +32,3 @@ class Staff(models.Model):
 
     class Meta:
         ordering = ["last_name", "first_name"]
-
- 
