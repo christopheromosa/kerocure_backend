@@ -16,3 +16,5 @@ services:
 volumes:
   postgres_data:
     driver: local
+
+# sudo systemctl stop postgresql - stops existing postgresql service

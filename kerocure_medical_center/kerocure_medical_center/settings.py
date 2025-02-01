@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework.authtoken",
     "patients",
     "triage",
     "consultation",
@@ -131,6 +132,13 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
         'rest_framework.renderers.BrowsableAPIRenderer', 
     ),
+    'DEFAULT_AUTHENTICATION_CLASSES':[
+        'rest_framework.authentication.TokenAuthentication',
+            ],
+    'DEFAULT_PERMISSION_CLASSES':[
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+    
 }
 
 # Static files (CSS, JavaScript, Images)
