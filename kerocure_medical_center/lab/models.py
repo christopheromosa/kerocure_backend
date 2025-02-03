@@ -7,6 +7,7 @@ class LabResult(models.Model):
     note = models.ForeignKey("consultation.PhysicianNote", on_delete=models.CASCADE)
     test_name = models.JSONField()
     result = models.JSONField()
+    total_cost = models.DecimalField(max_digits=10, decimal_places=2)
     recorded_by = models.ForeignKey("accounts.Staff", on_delete=models.SET_NULL, null=True)
     recorded_at = models.DateTimeField(auto_now_add=True)
 

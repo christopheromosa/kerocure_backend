@@ -7,6 +7,10 @@ from rest_framework.response import Response
 from patients.serializers import PatientSerializer
 from rest_framework import status
 from django.utils import timezone
+from triage.models import Triage
+from consultation.models import PhysicianNote
+from patients.models import Patient
+from lab.models import LabResult
 
 
 # Create your views here.
@@ -23,7 +27,7 @@ class VisitViewSet(ModelViewSet):
 
         # Check if the patient already has a visit today
         existing_visit = Visit.objects.filter(
-            patient_id=patient_id, visit_date__date=today
+            patient_id=patient_id, visit_date=today
         ).first()
         if existing_visit:
             return Response(
@@ -100,9 +104,59 @@ def billing_patients(request):
 
 
 @api_view(["GET"])
-def get_visit_id_by_patient_id_date(request):
-    patient_id = request.data.get("patient")
+def get_today_visit(request, patientId):
     today = timezone.now().date()
-    visit = Visit.objects.filter(patient_id=3, visit_date__date=today)
-    print(visit)
-    return Response(visit)
+    print(today)
+    visit = Visit.objects.filter(patient_id=patientId, visit_date=today).first()
+    print(visit.visit_date)
+    if not visit:
+        return Response({"error": "No visit found for today"}, status=404)
+    triage = Triage.objects.filter(visit=visit).first()
+    consultation = PhysicianNote.objects.filter(visit=visit).first()
+    patient = Patient.objects.filter(id=patientId).first()
+    lab = LabResult.objects.filter(visit=visit).first()
+    return Response(
+        {
+            "visit_id": visit.visit_id,
+            "triage_data": (
+                {
+                    "triage_id": triage.triage_id,
+                    "vital_signs": triage.vital_signs,
+                    "recorded_by": (
+                        triage.recorded_by.id if triage.recorded_by else None
+                    ),
+                    "recorded_at": triage.recorded_at.strftime("%Y-%m-%d %H:%M:%S"),
+                }
+                if triage
+                else None
+            ),
+            "consultation_data": (
+                {
+                    "note_id": consultation.note_id,
+                    "diagnosis": consultation.diagnosis,
+                    "prescription": consultation.prescription,
+                    "lab_test_ordered": consultation.lab_tests_ordered,
+                    "physician": (
+                        consultation.physician.id if consultation.physician else None
+                    ),
+                    "recorded_at": consultation.recorded_at,
+                }
+            ),
+            "patient_data": (
+                {
+                    "patient_id": patient.pk,
+                    "first_name": patient.first_name,
+                    "last_name": patient.last_name,
+                    "dob": patient.dob,
+                    "contact_number": patient.contact_number,
+                }
+            ),
+            "lab_data": (
+                {
+                    "result_id": lab.result_id,
+                    "results": lab.result,
+                    "test_name": lab.test_name,
+                }
+            ),
+        }
+    )

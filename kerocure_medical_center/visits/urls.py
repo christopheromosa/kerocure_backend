@@ -7,7 +7,7 @@ from .views import (
     lab_patients,
     pharmacy_patients,
     billing_patients,
-    get_visit_id_by_patient_id_date,
+    get_today_visit,
 )
 
 
@@ -26,8 +26,8 @@ urlpatterns = [
     path("api/pharmacy-patients/", pharmacy_patients, name="pharmacy-patients"),
     path("api/billing-patients/", billing_patients, name="billing-patients"),
     path(
-        "api/visit-patient-id/",
-        get_visit_id_by_patient_id_date,
-        name="visit-patient-id",
+        "api/visit/today/<int:patientId>/",
+        get_today_visit,
+        name="get_today_visit",
     ),
 ]
