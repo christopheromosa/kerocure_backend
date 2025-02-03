@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
+from rest_framework.permissions import AllowAny
 
 class AccountsViewSet(viewsets.ModelViewSet):
     queryset = Staff.objects.all()
@@ -13,24 +14,18 @@ class AccountsViewSet(viewsets.ModelViewSet):
 
 
 class StaffLoginView(ObtainAuthToken):
+    permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
-        
+
         # Fetch the associated staff profile
         try:
             staff = Staff.objects.get(user=user)
             role = staff.role
         except Staff.DoesNotExist:
             role = None
-            
-        return Response({"token": token.key,'user_id':user.pk,"username": user.username, "role": role})
-        
-        
-        
-    
 
-
-
+        return Response({"token": token.key,'user_id':staff.id,"username": user.username, "role": role})
