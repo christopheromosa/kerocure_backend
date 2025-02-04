@@ -44,7 +44,7 @@ def triage_patients(request):
     Fetch patients whose visit's current_state is 'triage' and next_state is 'consultation'.
     """
     visits = Visit.objects.filter(
-        current_state="triage", next_state="consultation"
+        current_state="TRIAGE", next_state="CONSULTATION"
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -57,7 +57,7 @@ def consultation_patients(request):
     Fetch patients whose visit's current_state is 'consultation' and next_state is 'lab'.
     """
     visits = Visit.objects.filter(
-        current_state="consultation", next_state="lab"
+        current_state="CONSULTATION", next_state="LAB"
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -70,7 +70,7 @@ def lab_patients(request):
     Fetch patients whose visit's current_state is 'lab' and next_state is 'consultation'.
     """
     visits = Visit.objects.filter(
-        current_state="lab", next_state="consultation"
+        current_state="LAB", next_state="CONSULTATION"
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -83,7 +83,7 @@ def pharmacy_patients(request):
     Fetch patients whose visit's current_state is 'consultation' and next_state is 'lab'.
     """
     visits = Visit.objects.filter(
-        current_state="consultation", next_state="pharmacy"
+        current_state="CONSULTATION", next_state="PHARMACY"
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -96,7 +96,7 @@ def billing_patients(request):
     Fetch patients whose visit's current_state is 'pharmacy' and next_state is 'billing'.
     """
     visits = Visit.objects.filter(
-        current_state="pharmacy", next_state="billing"
+        current_state="PHARMACY", next_state="BILLING"
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -141,6 +141,8 @@ def get_today_visit(request, patientId):
                     ),
                     "recorded_at": consultation.recorded_at,
                 }
+                if consultation
+                else None
             ),
             "patient_data": (
                 {
@@ -150,6 +152,8 @@ def get_today_visit(request, patientId):
                     "dob": patient.dob,
                     "contact_number": patient.contact_number,
                 }
+                if patient
+                else None
             ),
             "lab_data": (
                 {
@@ -157,6 +161,8 @@ def get_today_visit(request, patientId):
                     "results": lab.result,
                     "test_name": lab.test_name,
                 }
+                if lab
+                else None
             ),
         }
     )

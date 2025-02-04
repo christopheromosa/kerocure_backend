@@ -12,7 +12,7 @@ class Medication(models.Model):
         "accounts.Staff", on_delete=models.SET_NULL, null=True
     )
     dispensed_at = models.DateTimeField(auto_now_add=True)
-    cost = models.DecimalField(max_digits=10, decimal_places=2)
+    cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self):
         return f"Medication: {self.medication_name} for Visit ID: {self.visit.visit_id}"
