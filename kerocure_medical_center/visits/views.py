@@ -11,6 +11,7 @@ from triage.models import Triage
 from consultation.models import PhysicianNote
 from patients.models import Patient
 from lab.models import LabResult
+from pharmacy.models import Medication
 
 
 # Create your views here.
@@ -57,7 +58,7 @@ def consultation_patients(request):
     Fetch patients whose visit's current_state is 'consultation' and next_state is 'lab'.
     """
     visits = Visit.objects.filter(
-        current_state="CONSULTATION", next_state="LAB"
+        current_state="CONSULTATION", next_state="LABORATORY"
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -70,7 +71,7 @@ def lab_patients(request):
     Fetch patients whose visit's current_state is 'lab' and next_state is 'consultation'.
     """
     visits = Visit.objects.filter(
-        current_state="LAB", next_state="CONSULTATION"
+        current_state="LABORATORY", next_state="CONSULTATION"
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -104,6 +105,19 @@ def billing_patients(request):
 
 
 @api_view(["GET"])
+def admin_patients(request):
+    """
+    Fetch patients whose visit's current_state is 'pharmacy' and next_state is 'billing'.
+    """
+    visits = Visit.objects.filter(
+        current_state="BILLING", next_state="COMPLETED"
+    ).select_related("patient")
+    patients = [visit.patient for visit in visits]
+    serializer = PatientSerializer(patients, many=True)
+    return Response(serializer.data)
+
+
+@api_view(["GET"])
 def get_today_visit(request, patientId):
     today = timezone.now().date()
     print(today)
@@ -115,6 +129,7 @@ def get_today_visit(request, patientId):
     consultation = PhysicianNote.objects.filter(visit=visit).first()
     patient = Patient.objects.filter(id=patientId).first()
     lab = LabResult.objects.filter(visit=visit).first()
+    medication = Medication.objects.filter(visit=visit).first()
     return Response(
         {
             "visit_id": visit.visit_id,
@@ -163,6 +178,13 @@ def get_today_visit(request, patientId):
                 }
                 if lab
                 else None
+            ),
+            "pharmacy_data": (
+                {
+                    "medication_id": medication.medication_id,
+                    "cost": medication.cost,
+                }
+                if medication else None
             ),
         }
     )

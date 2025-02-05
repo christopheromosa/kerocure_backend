@@ -1,6 +1,5 @@
 from django.db import models
 
-
 # Create your models here.
 class Medication(models.Model):
     medication_id = models.AutoField(primary_key=True)
