@@ -44,8 +44,9 @@ def triage_patients(request):
     """
     Fetch patients whose visit's current_state is 'triage' and next_state is 'consultation'.
     """
+    today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="TRIAGE", next_state="CONSULTATION"
+        current_state="TRIAGE", next_state="CONSULTATION",visit_date=today
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -57,8 +58,9 @@ def consultation_patients(request):
     """
     Fetch patients whose visit's current_state is 'consultation' and next_state is 'lab'.
     """
+    today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="CONSULTATION", next_state="LABORATORY"
+        current_state="CONSULTATION", next_state="LABORATORY",visit_date=today
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -70,8 +72,9 @@ def lab_patients(request):
     """
     Fetch patients whose visit's current_state is 'lab' and next_state is 'consultation'.
     """
+    today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="LABORATORY", next_state="CONSULTATION"
+        current_state="LABORATORY", next_state="CONSULTATION",visit_date=today
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -83,8 +86,9 @@ def pharmacy_patients(request):
     """
     Fetch patients whose visit's current_state is 'consultation' and next_state is 'lab'.
     """
+    today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="CONSULTATION", next_state="PHARMACY"
+        current_state="CONSULTATION", next_state="PHARMACY",visit_date=today
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -96,8 +100,9 @@ def billing_patients(request):
     """
     Fetch patients whose visit's current_state is 'pharmacy' and next_state is 'billing'.
     """
+    today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="PHARMACY", next_state="BILLING"
+        current_state="PHARMACY", next_state="BILLING",visit_date=today
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -109,8 +114,9 @@ def admin_patients(request):
     """
     Fetch patients whose visit's current_state is 'pharmacy' and next_state is 'billing'.
     """
+    today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="BILLING", next_state="COMPLETED"
+        current_state="BILLING", next_state="COMPLETED",visit_date=today
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -172,9 +178,8 @@ def get_today_visit(request, patientId):
             ),
             "lab_data": (
                 {
-                    "result_id": lab.result_id,
-                    "results": lab.result,
-                    "test_name": lab.test_name,
+                    "result": lab.result,
+                    "total_cost":lab.total_cost
                 }
                 if lab
                 else None

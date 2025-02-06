@@ -19,4 +19,4 @@ class Billing(models.Model):
     )
 
     def __str__(self):
-        return f"Billing for Visit ID: {self.visit.visit_id} - Service: {self.service_name}"
+        return f"Billing for Visit ID: {self.visit.visit_id} - Service: {self.bill_id}"

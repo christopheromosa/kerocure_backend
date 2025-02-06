@@ -21,11 +21,23 @@ class StaffLoginView(ObtainAuthToken):
         user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
 
-        # Fetch the associated staff profile
+        # Default values
+        user_id = user.id  # Use Django user ID by default
+        role = None
+        
         try:
             staff = Staff.objects.get(user=user)
             role = staff.role
+            user_id = staff.id  # Override with Staff ID if found
         except Staff.DoesNotExist:
-            role = None
-
-        return Response({"token": token.key,'user_id':staff.id,"username": user.username, "role": role})
+            if user.is_superuser:
+                role = "Administrator"
+            else:
+                return Response({"error": "Unauthorized access"}, status=status.HTTP_403_FORBIDDEN)
+        
+        return Response({
+            "token": token.key,
+            "user_id": user_id,
+            "username": user.username,
+            "role": role,
+        })
