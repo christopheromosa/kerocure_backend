@@ -25,7 +25,9 @@ SECRET_KEY = "django-insecure-qc%!l)(m!2oez8qogda=_@!ymr-5p+099d*r!wh6m#q$d9zsvt
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = ["*"]
+
 
 
 # Application definition
@@ -64,7 +66,9 @@ MIDDLEWARE = [
 ]
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  
+    "http://localhost:3000",
+    "http://192.168.0.107:3000",
+    "http://192.168.0.107",  # Allow accessing the API directly
 ]
 
 ROOT_URLCONF = "kerocure_medical_center.urls"
@@ -127,10 +131,12 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
+
 TIME_ZONE = "UTC"
 
 USE_I18N = True
 
+TIME_ZONE = "Africa/Nairobi"
 USE_TZ = True
 
 REST_FRAMEWORK = {
