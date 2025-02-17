@@ -3,6 +3,9 @@ from .models import LabResult
 
 
 class LabSerializer(serializers.ModelSerializer):
+    patient_name = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField()
+
     class Meta:
         model = LabResult
         fields = "__all__"

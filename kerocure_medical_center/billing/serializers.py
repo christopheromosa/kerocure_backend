@@ -3,6 +3,8 @@ from .models import Billing
 
 
 class BillingSerializer(serializers.ModelSerializer):
+    patient_name = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField()
     class Meta:
         model = Billing
         fields = "__all__"

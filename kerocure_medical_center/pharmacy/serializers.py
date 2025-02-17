@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import Medication
 
 class PharmacySerializer(serializers.ModelSerializer):
+    patient_name = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField()
     class Meta:
         model = Medication
         fields = "__all__"
