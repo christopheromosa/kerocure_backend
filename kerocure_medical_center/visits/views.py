@@ -24,11 +24,12 @@ class VisitViewSet(ModelViewSet):
         Prevent duplicate visits for the same patient on the same day.
         """
         patient_id = request.data.get("patient")
-        today = timezone.now().date()
+        # today = timezone.now().date()
 
         # Check if the patient already has a visit today
         existing_visit = Visit.objects.filter(
-            patient_id=patient_id, visit_date=today
+            patient_id=patient_id,
+            # visit_date=today
         ).first()
         if existing_visit:
             return Response(
@@ -46,7 +47,33 @@ def triage_patients(request):
     """
     today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="TRIAGE", next_state="CONSULTATION",visit_date=today
+        current_state="TRIAGE",
+        next_state="CONSULTATION",
+        # visit_date=today
+    ).select_related("patient", "department")
+    patients_data = []
+    for visit in visits:
+        patient_data = PatientSerializer(visit.patient).data  # Serialize patient
+        patient_data["department"] = {
+            "id": visit.department.id if visit.department else None,
+            "name": visit.department.name if visit.department else "Unknown",
+        }  # Add department info
+        patients_data.append(patient_data)
+
+    return Response(patients_data)
+
+
+@api_view(["GET"])
+def triage_patients_department(request, department_id):
+    """
+    Fetch patients whose visit's current_state is 'triage' and next_state is 'consultation and department specified'.
+    """
+    today = timezone.now().date()
+    visits = Visit.objects.filter(
+        current_state="TRIAGE",
+        next_state="CONSULTATION",
+        department=department_id,
+        # visit_date=today
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -60,7 +87,9 @@ def consultation_patients(request):
     """
     today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="CONSULTATION", next_state="LABORATORY",visit_date=today
+        current_state="CONSULTATION",
+        next_state="LABORATORY",
+        # visit_date=today
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -74,7 +103,9 @@ def lab_patients(request):
     """
     today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="LABORATORY", next_state="CONSULTATION",visit_date=today
+        current_state="LABORATORY",
+        next_state="CONSULTATION",
+        # visit_date=today
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -88,7 +119,7 @@ def pharmacy_patients(request):
     """
     today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="CONSULTATION", next_state="PHARMACY",visit_date=today
+        current_state="CONSULTATION", next_state="PHARMACY", visit_date=today
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -102,7 +133,9 @@ def billing_patients(request):
     """
     today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="PHARMACY", next_state="BILLING",visit_date=today
+        current_state="PHARMACY",
+        next_state="BILLING",
+        # visit_date=today
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -116,7 +149,9 @@ def admin_patients(request):
     """
     today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="BILLING", next_state="COMPLETED",visit_date=today
+        current_state="BILLING",
+        next_state="COMPLETED",
+        # visit_date=today
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -127,7 +162,10 @@ def admin_patients(request):
 def get_today_visit(request, patientId):
     today = timezone.now().date()
     print(today)
-    visit = Visit.objects.filter(patient_id=patientId, visit_date=today).first()
+    visit = Visit.objects.filter(
+        patient_id=patientId,
+        #  visit_date=today
+    ).first()
     print(visit.visit_date)
     if not visit:
         return Response({"error": "No visit found for today"}, status=404)
@@ -177,19 +215,90 @@ def get_today_visit(request, patientId):
                 else None
             ),
             "lab_data": (
-                {
-                    "result": lab.result,
-                    "total_cost":lab.total_cost
-                }
-                if lab
-                else None
+                {"result": lab.result, "total_cost": lab.total_cost} if lab else None
             ),
             "pharmacy_data": (
                 {
                     "medication_id": medication.medication_id,
                     "cost": medication.cost,
                 }
-                if medication else None
+                if medication
+                else None
             ),
         }
     )
+
+
+@api_view(["GET"])
+def get_patient_history(request, patientId):
+    patient = Patient.objects.prefetch_related(
+        "visits__triage",
+        "visits__consultation",
+        "visits__lab",
+        "visits__pharmacy",
+        "visits__billing",
+    ).get(patient_id=patientId)
+
+    history = []
+
+    for visit in patient.visits.all():
+        visit_data = {
+            "visit_id": visit.id,
+            "visit_date": visit.visit_date,
+            "triage": list(
+                visit.triage.all().values(
+                    "id", "blood_pressure", "temperature", "weight"
+                )
+            ),
+            "consultation": list(
+                visit.consultation.all().values(
+                    "id", "doctor", "diagnosis", "prescription"
+                )
+            ),
+            "lab": list(
+                visit.lab.all().values("id", "test_name", "test_result", "test_date")
+            ),
+            "pharmacy": list(
+                visit.pharmacy.all().values(
+                    "id", "medication_name", "dosage", "issued_date"
+                )
+            ),
+            "billing": list(
+                visit.billing.all().values("id", "total_cost", "payment_status")
+            ),
+        }
+        history.append(visit_data)
+
+    return history
+
+
+@api_view(["GET"])
+def get_visit_details(visit_id):
+    visit = Visit.objects.prefetch_related(
+        "triage", "consultation", "lab", "pharmacy", "billing"
+    ).get(id=visit_id)
+
+    visit_data = {
+        "visit_id": visit.id,
+        "visit_date": visit.visit_date,
+        "visit_type": visit.visit_type,
+        "triage": list(
+            visit.triage.all().values("id", "blood_pressure", "temperature", "weight")
+        ),
+        "consultation": list(
+            visit.consultation.all().values("id", "doctor", "diagnosis", "prescription")
+        ),
+        "lab": list(
+            visit.lab.all().values("id", "test_name", "test_result", "test_date")
+        ),
+        "pharmacy": list(
+            visit.pharmacy.all().values(
+                "id", "medication_name", "dosage", "issued_date"
+            )
+        ),
+        "billing": list(
+            visit.billing.all().values("id", "total_cost", "payment_status")
+        ),
+    }
+
+    return visit_data

@@ -48,6 +48,9 @@ INSTALLED_APPS = [
     "billing",
     "accounts",
     "visits",
+    "labtests",
+    "drugs",
+    "departments",
     "corsheaders",
 ]
 
