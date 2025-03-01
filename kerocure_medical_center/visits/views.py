@@ -245,27 +245,11 @@ def get_patient_history(request, patientId):
         visit_data = {
             "visit_id": visit.id,
             "visit_date": visit.visit_date,
-            "triage": list(
-                visit.triage.all().values(
-                    "id", "blood_pressure", "temperature", "weight"
-                )
-            ),
-            "consultation": list(
-                visit.consultation.all().values(
-                    "id", "doctor", "diagnosis", "prescription"
-                )
-            ),
-            "lab": list(
-                visit.lab.all().values("id", "test_name", "test_result", "test_date")
-            ),
-            "pharmacy": list(
-                visit.pharmacy.all().values(
-                    "id", "medication_name", "dosage", "issued_date"
-                )
-            ),
-            "billing": list(
-                visit.billing.all().values("id", "total_cost", "payment_status")
-            ),
+            "triage": list(visit.triage.all().values()),
+            "consultation": list(visit.consultation.all().values()),
+            "lab": list(visit.lab.all().values()),
+            "pharmacy": list(visit.pharmacy.all().values()),
+            "billing": list(visit.billing.all().values()),
         }
         history.append(visit_data)
 
@@ -282,23 +266,71 @@ def get_visit_details(visit_id):
         "visit_id": visit.id,
         "visit_date": visit.visit_date,
         "visit_type": visit.visit_type,
-        "triage": list(
-            visit.triage.all().values("id", "blood_pressure", "temperature", "weight")
-        ),
-        "consultation": list(
-            visit.consultation.all().values("id", "doctor", "diagnosis", "prescription")
-        ),
-        "lab": list(
-            visit.lab.all().values("id", "test_name", "test_result", "test_date")
-        ),
-        "pharmacy": list(
-            visit.pharmacy.all().values(
-                "id", "medication_name", "dosage", "issued_date"
-            )
-        ),
-        "billing": list(
-            visit.billing.all().values("id", "total_cost", "payment_status")
-        ),
+        "triage": list(visit.triage.all().values()),
+        "consultation": list(visit.consultation.all().values()),
+        "lab": list(visit.lab.all().values()),
+        "pharmacy": list(visit.pharmacy.all().values()),
+        "billing": list(visit.billing.all().values()),
     }
 
     return visit_data
+
+
+@api_view(["GET"])
+def get_all_visits(request):
+    """
+    Fetch all visits.
+    """
+    visits = Visit.objects.prefetch_related(
+        "triage", "consultation", "lab", "pharmacy", "billing"
+    ).all()
+
+    visit_data = []
+    for visit in visits:
+        visit_data.append(
+            {
+                "id": visit.id,
+                "visit_date": visit.visit_date,
+                "visit_type": visit.visit_type,
+                "patient_name": f"{visit.patient.first_name} {visit.patient.last_name}",
+                "patient_id": visit.patient.id,
+                "triage": list(visit.triage.all().values()),
+                "consultation": list(visit.consultation.all().values()),
+                "lab": list(visit.lab.all().values()),
+                "pharmacy": list(visit.pharmacy.all().values()),
+                "billing": list(visit.billing.all().values()),
+            }
+        )
+
+    return Response(visit_data)
+
+
+@api_view(["GET"])
+def get_visits_by_patient_name(request, patient_name):
+    """
+    Fetch visits for a specific patient by name.
+    """
+    visits = Visit.objects.prefetch_related(
+        "triage", "consultation", "lab", "pharmacy", "billing"
+    ).filter(patient__first_name__icontains=patient_name) | Visit.objects.filter(
+        patient__last_name__icontains=patient_name
+    )
+
+    visit_data = []
+    for visit in visits:
+        visit_data.append(
+            {
+                "id": visit.id,
+                "visit_date": visit.visit_date,
+                "visit_type": visit.visit_type,
+                "patient_name": f"{visit.patient.first_name} {visit.patient.last_name}",
+                "patient_id": visit.patient.id,
+                "triage": list(visit.triage.all().values()),
+                "consultation": list(visit.consultation.all().values()),
+                "lab": list(visit.lab.all().values()),
+                "pharmacy": list(visit.pharmacy.all().values()),
+                "billing": list(visit.billing.all().values()),
+            }
+        )
+
+    return Response(visit_data)

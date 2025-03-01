@@ -1,6 +1,29 @@
 from django.contrib import admin
-from .models import Staff
+from django.contrib.auth.admin import UserAdmin
+from .models import StaffUser
 
-# Register your models here.
 
-admin.site.register(Staff)
+class StaffUserAdmin(UserAdmin):
+    model = StaffUser
+    list_display = (
+        "username",
+        "first_name",
+        "last_name",
+        "role",
+        "is_staff",
+        "is_active",
+    )
+    fieldsets = UserAdmin.fieldsets + (
+        ("Staff Details", {"fields": ("role", "phone_number")}),
+    )
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        ("Staff Details", {"fields": ("role", "phone_number")}),
+    )
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:  # If creating a new user
+            obj.set_password("000000")  # Set a default password
+        super().save_model(request, obj, form, change)
+
+
+admin.site.register(StaffUser, StaffUserAdmin)

@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "labtests",
     "drugs",
     "departments",
+    "disease",
     "corsheaders",
 ]
 

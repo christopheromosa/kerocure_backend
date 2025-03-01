@@ -1,65 +1,37 @@
 from rest_framework import serializers
-from .models import Staff
+from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
-from .utils import generate_username, generate_password
-from django.contrib.auth.models import User
+
+StaffUser = get_user_model()
 
 
-class AccountSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(read_only=True)
-    password = serializers.CharField(read_only=True)
-
-    # Only allow writing to the password field
+class StaffUserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False)
+    is_staff = serializers.BooleanField(default=False)
+    is_active = serializers.BooleanField(default=True)
 
     class Meta:
-        model = Staff
+        model = StaffUser
         fields = [
+            "id",
+            "username",
             "first_name",
             "last_name",
             "role",
             "phone_number",
-            "username",
             "password",
-            "created_at",
-            "updated_at",
+            "is_staff",
+            "is_active",
+            "date_joined",
         ]
 
     def create(self, validated_data):
-        """
-        Override the create method to generate the username and password
-        and hash the password before saving the staff object.
-        """
-        # Generate and assign the username automatically
-        username = generate_username(validated_data)
-
-        # Generate the password automatically
-        password = generate_password(validated_data)
-
-        # create the User instance
-        user = User.objects.create_user(username=username, password=password)
-
-        
-
-        # Create the staff object
-        staff = Staff.objects.create(
-            user=user,
-            username=username,
-            password=make_password(password), ** validated_data,
+        validated_data["password"] = make_password(
+            validated_data.get("password", "000000")
         )
+        return super().create(validated_data)
 
-        # Store the plain password temporarily for the response
-        self._plain_password = password  # Temporarily store the plain password
-
-        return staff
-
-    def to_representation(self, instance):
-        """
-        Customize the response to include the plain password.
-        """
-        # Get the default representation
-        representation = super().to_representation(instance)
-
-        # Add the plain password to the response data
-        representation["password"] = getattr(self, "_plain_password", None)
-
-        return representation
+    def update(self, instance, validated_data):
+        if "password" in validated_data:
+            validated_data["password"] = make_password(validated_data["password"])
+        return super().update(instance, validated_data)

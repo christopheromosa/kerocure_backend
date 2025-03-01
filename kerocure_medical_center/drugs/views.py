@@ -13,6 +13,9 @@ class DrugViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save()
+    def get_queryset(self):
+        query = self.request.query_params.get("query", "")
+        return Drug.objects.filter(drug_name__icontains=query)
 
 
 class DrugListCreateView(generics.ListCreateAPIView):

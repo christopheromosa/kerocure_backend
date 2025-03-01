@@ -11,6 +11,7 @@ from .views import (
     admin_patients,
     get_patient_history,
     get_visit_details,
+    triage_patients_department,
 )
 
 
@@ -20,6 +21,11 @@ router.register(r"visits", VisitViewSet)
 urlpatterns = [
     path("", include(router.urls)),
     path("api/triage-patients/", triage_patients, name="triage-patients"),
+    path(
+        "api/triage-department-patients/<int:department_id>",
+        triage_patients_department,
+        name="triage-department_patients",
+    ),
     path(
         "api/consultation-patients/",
         consultation_patients,

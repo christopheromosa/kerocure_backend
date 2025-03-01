@@ -1,4 +1,5 @@
 from django.db import models
+from accounts.models import StaffUser
 
 
 # Create your models here.
@@ -10,7 +11,7 @@ class LabResult(models.Model):
     result = models.JSONField()
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     recorded_by = models.ForeignKey(
-        "accounts.Staff", on_delete=models.SET_NULL, null=True
+        StaffUser, on_delete=models.SET_NULL, null=True, blank=True
     )
     recorded_at = models.DateTimeField(auto_now_add=True)
 
