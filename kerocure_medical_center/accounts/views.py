@@ -49,7 +49,8 @@ class StaffLoginView(ObtainAuthToken):
                 "token": token.key,
                 "user_id": user.id,
                 "username": user.username,
-                "role": user.role,
+                "roles": user.roles,
+                "is_active":user.is_active,
             }
         )
 

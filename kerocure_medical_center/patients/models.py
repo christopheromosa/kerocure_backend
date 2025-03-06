@@ -9,7 +9,7 @@ class Patient(models.Model):
     ]
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
-    sex = models.CharField(max_length=6, choices=SEX_CHOICES, default="")
+    gender = models.CharField(max_length=6, choices=SEX_CHOICES, default="")
     dob = models.DateField()
     residence = models.CharField(max_length=255, default="")
     contact_number = models.CharField(max_length=15)

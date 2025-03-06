@@ -9,15 +9,15 @@ class StaffUserAdmin(UserAdmin):
         "username",
         "first_name",
         "last_name",
-        "role",
+        "roles",
         "is_staff",
         "is_active",
     )
     fieldsets = UserAdmin.fieldsets + (
-        ("Staff Details", {"fields": ("role", "phone_number")}),
+        ("Staff Details", {"fields": ("roles", "phone_number")}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ("Staff Details", {"fields": ("role", "phone_number")}),
+        ("Staff Details", {"fields": ("roles", "phone_number")}),
     )
 
     def save_model(self, request, obj, form, change):

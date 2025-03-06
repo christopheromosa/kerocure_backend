@@ -12,6 +12,7 @@ from .views import (
     get_patient_history,
     get_visit_details,
     triage_patients_department,
+    get_all_visits,
 )
 
 
@@ -50,4 +51,5 @@ urlpatterns = [
         get_visit_details,
         name="patient-visit-details",
     ),
+    path("api/all-visits/", get_all_visits, name="get-all-visits"),
 ]

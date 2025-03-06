@@ -5,7 +5,9 @@ from accounts.models import StaffUser
 # Create your models here.
 class LabResult(models.Model):
     result_id = models.AutoField(primary_key=True)
-    visit = models.ForeignKey("visits.Visit", on_delete=models.CASCADE)
+    visit = models.ForeignKey(
+        "visits.Visit", on_delete=models.CASCADE, related_name="labs"
+    )
     note = models.ForeignKey("consultation.PhysicianNote", on_delete=models.CASCADE)
 
     result = models.JSONField()
@@ -17,6 +19,4 @@ class LabResult(models.Model):
 
     def __str__(self):
 
-        return (
-            f"Lab Result for Visit ID: {self.visit.visit_id} - Test: {self.result}"
-        )
+        return f"Lab Result for Visit ID: {self.visit.visit_id} - Test: {self.result}"

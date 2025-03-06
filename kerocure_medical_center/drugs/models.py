@@ -4,7 +4,7 @@ from django.db import models
 # Create your models here.
 class Drug(models.Model):
     drug_name = models.CharField(max_length=255)
-    cost = models.DecimalField(max_digits=10, decimal_places=2)
+    cost = models.IntegerField(null=True)
     quantity = models.PositiveIntegerField(default=0)  # Track the quantity of the drug
     status = models.CharField(max_length=20, default="Available")
 

@@ -5,7 +5,9 @@ from django.db import models
 class Visit(models.Model):
     VISIT_CHOICES = [("Visit", "Visit"), ("Revisit", "Revisit")]
     visit_id = models.AutoField(primary_key=True)
-    patient = models.ForeignKey("patients.Patient", on_delete=models.CASCADE)
+    patient = models.ForeignKey(
+        "patients.Patient", on_delete=models.CASCADE, related_name="visits"
+    )
     visit_date = models.DateField(auto_now_add=True)
     current_state = models.CharField(max_length=50)
     next_state = models.CharField(max_length=50)

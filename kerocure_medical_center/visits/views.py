@@ -19,25 +19,24 @@ class VisitViewSet(ModelViewSet):
     queryset = Visit.objects.all()
     serializer_class = VisitSerializer
 
-    def create(self, request, *args, **kwargs):
+    def perform_create(self, serializer):
         """
-        Prevent duplicate visits for the same patient on the same day.
+        Automatically set visit_type:
+        - 'Visit' if it's the first visit of the day
+        - 'Revisit' if the patient already has a visit today
         """
-        patient_id = request.data.get("patient")
-        # today = timezone.now().date()
+        patient = serializer.validated_data["patient"]
+        today = timezone.now().date()
 
-        # Check if the patient already has a visit today
+        # Check if patient already has a visit today
         existing_visit = Visit.objects.filter(
-            patient_id=patient_id,
-            # visit_date=today
-        ).first()
-        if existing_visit:
-            return Response(
-                {"detail": "Visit already exists for today."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            patient=patient, visit_date=today
+        ).exists()
 
-        return super().create(request, *args, **kwargs)
+        visit_type = "Revisit" if existing_visit else "Visit"
+
+        # Save the instance with the determined visit_type
+        serializer.save(visit_type=visit_type)
 
 
 @api_view(["GET"])
@@ -161,119 +160,163 @@ def admin_patients(request):
 @api_view(["GET"])
 def get_today_visit(request, patientId):
     today = timezone.now().date()
-    print(today)
-    visit = Visit.objects.filter(
-        patient_id=patientId,
-        #  visit_date=today
-    ).first()
-    print(visit.visit_date)
-    if not visit:
-        return Response({"error": "No visit found for today"}, status=404)
-    triage = Triage.objects.filter(visit=visit).first()
-    consultation = PhysicianNote.objects.filter(visit=visit).first()
-    patient = Patient.objects.filter(id=patientId).first()
-    lab = LabResult.objects.filter(visit=visit).first()
-    medication = Medication.objects.filter(visit=visit).first()
-    return Response(
-        {
-            "visit_id": visit.visit_id,
-            "triage_data": (
-                {
-                    "triage_id": triage.triage_id,
-                    "vital_signs": triage.vital_signs,
-                    "recorded_by": (
-                        triage.recorded_by.id if triage.recorded_by else None
-                    ),
-                    "recorded_at": triage.recorded_at.strftime("%Y-%m-%d %H:%M:%S"),
-                }
-                if triage
-                else None
-            ),
-            "consultation_data": (
-                {
-                    "note_id": consultation.note_id,
-                    "diagnosis": consultation.diagnosis,
-                    "prescription": consultation.prescription,
-                    "lab_test_ordered": consultation.lab_tests_ordered,
-                    "physician": (
-                        consultation.physician.id if consultation.physician else None
-                    ),
-                    "recorded_at": consultation.recorded_at,
-                }
-                if consultation
-                else None
-            ),
-            "patient_data": (
-                {
-                    "patient_id": patient.pk,
-                    "first_name": patient.first_name,
-                    "last_name": patient.last_name,
-                    "dob": patient.dob,
-                    "contact_number": patient.contact_number,
-                }
-                if patient
-                else None
-            ),
-            "lab_data": (
-                {"result": lab.result, "total_cost": lab.total_cost} if lab else None
-            ),
-            "pharmacy_data": (
-                {
-                    "medication_id": medication.medication_id,
-                    "cost": medication.cost,
-                }
-                if medication
-                else None
-            ),
-        }
-    )
+    visits = Visit.objects.filter(
+        patient=patientId,
+        visit_date=today,
+    ).order_by(
+        "-visit_date"
+    )  # Fetch all visits for the day, ordered by creation time
+
+    if not visits:
+        return Response({"error": "No visits found for today"}, status=404)
+
+    visit_data = []
+    for visit in visits:
+        triage = Triage.objects.filter(visit=visit).first()
+        consultation = PhysicianNote.objects.filter(visit=visit).first()
+        patient = Patient.objects.filter(id=patientId).first()
+        lab = LabResult.objects.filter(visit=visit).first()
+        medication = Medication.objects.filter(visit=visit).first()
+
+        visit_data.append(
+            {
+                "visit_id": visit.visit_id,
+                "triage_data": (
+                    {
+                        "triage_id": triage.triage_id,
+                        "vital_signs": triage.vital_signs,
+                        "recorded_by": (
+                            triage.recorded_by.id if triage.recorded_by else None
+                        ),
+                        "recorded_at": triage.recorded_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    }
+                    if triage
+                    else None
+                ),
+                "consultation_data": (
+                    {
+                        "note_id": consultation.note_id,
+                        "diagnosis": consultation.diagnosis,
+                        "prescription": consultation.prescription,
+                        "lab_test_ordered": consultation.lab_tests_ordered,
+                        "physician": (
+                            consultation.physician.id
+                            if consultation.physician
+                            else None
+                        ),
+                        "recorded_at": consultation.recorded_at,
+                    }
+                    if consultation
+                    else None
+                ),
+                "patient_data": (
+                    {
+                        "patient_id": patient.pk,
+                        "first_name": patient.first_name,
+                        "last_name": patient.last_name,
+                        "dob": patient.dob,
+                        "contact_number": patient.contact_number,
+                    }
+                    if patient
+                    else None
+                ),
+                "lab_data": (
+                    {"result": lab.result, "total_cost": lab.total_cost}
+                    if lab
+                    else None
+                ),
+                "pharmacy_data": (
+                    {
+                        "medication_id": medication.medication_id,
+                        "cost": medication.cost,
+                    }
+                    if medication
+                    else None
+                ),
+            }
+        )
+
+    return Response(visit_data)
 
 
 @api_view(["GET"])
 def get_patient_history(request, patientId):
-    patient = Patient.objects.prefetch_related(
-        "visits__triage",
-        "visits__consultation",
-        "visits__lab",
-        "visits__pharmacy",
-        "visits__billing",
-    ).get(patient_id=patientId)
+    # Fetch all visits for the patient and prefetch related objects
+    visits = Visit.objects.filter(
+        patient_id=patientId, current_state="BILLING", next_state="COMPLETED"
+    ).prefetch_related(
+        "triage",  # Prefetch related Triage objects
+        "consultations",  # Correct related_name for Consultation
+        "labs",  # Correct related_name for Lab
+        "pharmacies",  # Correct related_name for Pharmacy
+        "billings",  # Correct related_name for Billing
+    )
 
     history = []
 
-    for visit in patient.visits.all():
+    for visit in visits:
         visit_data = {
-            "visit_id": visit.id,
+            "visit_id": visit.visit_id,
             "visit_date": visit.visit_date,
-            "triage": list(visit.triage.all().values()),
-            "consultation": list(visit.consultation.all().values()),
-            "lab": list(visit.lab.all().values()),
-            "pharmacy": list(visit.pharmacy.all().values()),
-            "billing": list(visit.billing.all().values()),
+            "current_state": visit.current_state,
+            "next_state": visit.next_state,
+            "total_cost": visit.total_cost,
+            "visit_type": visit.visit_type,
+            "department": visit.department.name if visit.department else None,
+            "triage": None,  # Initialize triage as None
+            "consultations": list(
+                visit.consultations.all().values()
+            ),  # Correct related_name
+            "labs": list(visit.labs.all().values()),  # Correct related_name
+            "pharmacies": list(visit.pharmacies.all().values()),  # Correct related_name
+            "billings": list(visit.billings.all().values()),  # Correct related_name
         }
+
+        # Access the related Triage object (if it exists)
+        if hasattr(visit, "triage"):
+            visit_data["triage"] = {
+                "triage_id": visit.triage.triage_id,
+                "vital_signs": visit.triage.vital_signs,
+                "recorded_by": (
+                    visit.triage.recorded_by.username
+                    if visit.triage.recorded_by
+                    else None
+                ),
+                "recorded_at": visit.triage.recorded_at,
+            }
+
         history.append(visit_data)
 
-    return history
+    return Response(history)
 
+
+from django.forms.models import model_to_dict
 
 @api_view(["GET"])
-def get_visit_details(visit_id):
+def get_visit_details(request, visitId):
     visit = Visit.objects.prefetch_related(
-        "triage", "consultation", "lab", "pharmacy", "billing"
-    ).get(id=visit_id)
+                "triage",  # Prefetch related Triage objects
+                "consultations",  # Ensure correct related_name for Consultation
+                "labs",  # Ensure correct related_name for Lab
+                "pharmacies",  # Ensure correct related_name for Pharmacy
+                "billings",  # Ensure correct related_name for Billing
+            ).get(visit_id=visitId)
+
+    # Use model_to_dict to safely serialize the triage object
+    triage_data = model_to_dict(visit.triage) if visit.triage else None
 
     visit_data = {
-        "visit_id": visit.id,
+        "visit_id": visit.visit_id,
         "visit_date": visit.visit_date,
         "visit_type": visit.visit_type,
-        "triage": list(visit.triage.all().values()),
-        "consultation": list(visit.consultation.all().values()),
-        "lab": list(visit.lab.all().values()),
-        "pharmacy": list(visit.pharmacy.all().values()),
-        "billing": list(visit.billing.all().values()),
+        "triage": triage_data,
+        "consultation": list(visit.consultations.all().values()),
+        "lab": list(visit.labs.all().values()),
+        "pharmacy": list(visit.pharmacies.all().values()),
+        "billing": list(visit.billings.all().values()),
     }
 
-    return visit_data
+    return Response(visit_data)
 
 
 @api_view(["GET"])

@@ -102,7 +102,7 @@ WSGI_APPLICATION = "kerocure_medical_center.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "kerocure_db",  # The name of your PostgreSQL database
+        "NAME": "kerocure_database",  # The name of your PostgreSQL database
         "USER": "kerocure_admin",  # The PostgreSQL username
         "PASSWORD": "kerocure_admin@123",  # The PostgreSQL password
         "HOST": "localhost",  # If you're running the database on your local machine
@@ -166,3 +166,4 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+AUTH_USER_MODEL = "accounts.StaffUser"

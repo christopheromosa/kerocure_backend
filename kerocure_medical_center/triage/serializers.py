@@ -8,14 +8,8 @@ class TriageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Triage
-        fields = [
-            "triage_id",
-            "visit",
-            "patient_name",
-            "vital_signs",
-            "staff_name",
-            "recorded_at",
-        ]
+        fields = "__all__"
+        extra_fields = ["patient_name", "staff_name"]
 
     def get_patient_name(self, obj):
         """Fetch the patient's full name from the related Visit model."""
