@@ -325,23 +325,25 @@ def get_all_visits(request):
     Fetch all visits.
     """
     visits = Visit.objects.prefetch_related(
-        "triage", "consultation", "lab", "pharmacy", "billing"
+        "triage", "consultations", "labs", "pharmacies", "billings"
     ).all()
 
     visit_data = []
     for visit in visits:
         visit_data.append(
             {
-                "id": visit.id,
+                "visit_id": visit.visit_id,
                 "visit_date": visit.visit_date,
                 "visit_type": visit.visit_type,
+                "department": visit.department.name if visit.department else None,
+                "visit_status":visit.visit_status,
                 "patient_name": f"{visit.patient.first_name} {visit.patient.last_name}",
                 "patient_id": visit.patient.id,
-                "triage": list(visit.triage.all().values()),
-                "consultation": list(visit.consultation.all().values()),
-                "lab": list(visit.lab.all().values()),
-                "pharmacy": list(visit.pharmacy.all().values()),
-                "billing": list(visit.billing.all().values()),
+                "triage": None,
+                "consultation": list(visit.consultations.all().values()),
+                "lab": list(visit.labs.all().values()),
+                "pharmacy": list(visit.pharmacies.all().values()),
+                "billing": list(visit.billings.all().values()),
             }
         )
 

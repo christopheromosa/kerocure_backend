@@ -21,6 +21,9 @@ class Visit(models.Model):
         null=True,
         related_name="visits",  # To fetch all visits related to a patient in a single query
     )
+    visit_status = models.CharField(
+            max_length=20, blank=True, default="pending"
+        )
 
     def __str__(self):
         return f"Visit ID: {self.visit_id} for {self.patient}"
