@@ -4,5 +4,5 @@ from .serializers import DepartmentSerializer
 
 
 class DepartmentViewSet(viewsets.ModelViewSet):
-    queryset = Department.objects.all()
+    queryset = Department.objects.all().order_by("-id")
     serializer_class = DepartmentSerializer

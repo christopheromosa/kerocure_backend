@@ -7,7 +7,7 @@ from django.db.models import Sum, DateField
 from django.db.models.functions import TruncDate
 
 class BillingViewSet(ModelViewSet):
-    queryset = Billing.objects.all()
+    queryset = Billing.objects.all().order_by("-bill_id")
     serializer_class = BillingSerializer
 
     def perform_create(self, serializer):

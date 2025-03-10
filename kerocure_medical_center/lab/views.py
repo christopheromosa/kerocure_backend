@@ -6,7 +6,7 @@ from django.utils import timezone
 from rest_framework.response import Response
 
 class LabViewSet(ModelViewSet):
-    queryset = LabResult.objects.all()
+    queryset = LabResult.objects.all().order_by("-result_id") 
     serializer_class = LabSerializer
 
     def perform_create(self, serializer):

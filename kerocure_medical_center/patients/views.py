@@ -8,7 +8,7 @@ from visits.models import Visit
 
 
 class PatientViewSet(ModelViewSet):
-    queryset = Patient.objects.all()
+    queryset = Patient.objects.all().order_by("-id")
     serializer_class = PatientSerializer
 
     def perform_create(self, serializer):

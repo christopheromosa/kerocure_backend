@@ -9,7 +9,7 @@ from visits.models import Visit
 
 
 class TriageViewSet(ModelViewSet):
-    queryset = Triage.objects.all()
+    queryset = Triage.objects.all().order_by('-triage_id')
     serializer_class = TriageSerializer
 
     def perform_create(self, serializer):

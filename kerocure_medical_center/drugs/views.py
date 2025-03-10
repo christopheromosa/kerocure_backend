@@ -10,7 +10,7 @@ import pandas as pd
 from io import BytesIO
 
 class DrugViewSet(ModelViewSet):
-    queryset = Drug.objects.all()
+    queryset = Drug.objects.all().order_by("-id")
     serializer_class = DrugSerializer
 
     def perform_create(self, serializer):

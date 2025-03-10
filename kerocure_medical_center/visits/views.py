@@ -16,7 +16,7 @@ from pharmacy.models import Medication
 
 # Create your views here.
 class VisitViewSet(ModelViewSet):
-    queryset = Visit.objects.all()
+    queryset = Visit.objects.all().order_by("-visit_id")
     serializer_class = VisitSerializer
 
     def perform_create(self, serializer):
@@ -197,6 +197,7 @@ def get_today_visit(request, patientId):
                     {
                         "note_id": consultation.note_id,
                         "diagnosis": consultation.diagnosis,
+                        "total_cost": consultation.total_cost,
                         "prescription": consultation.prescription,
                         "lab_test_ordered": consultation.lab_tests_ordered,
                         "physician": (

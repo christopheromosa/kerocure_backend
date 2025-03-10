@@ -9,7 +9,7 @@ from drugs.models import Drug
 
 
 class PharmacyViewSet(ModelViewSet):
-    queryset = Medication.objects.all()
+    queryset = Medication.objects.all().order_by("-medication_id")
     serializer_class = PharmacySerializer
 
     

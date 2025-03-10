@@ -10,7 +10,7 @@ import pandas as pd
 from io import BytesIO
 
 class LabTestSet(ModelViewSet):
-    queryset = LabTest.objects.all()
+    queryset = LabTest.objects.all().order_by("-id")
     serializer_class = LabTestSerializer
 
     def perform_create(self, serializer):

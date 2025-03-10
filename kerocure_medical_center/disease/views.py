@@ -6,7 +6,7 @@ from rest_framework import status
 
 
 class DiseaseListCreateView(generics.ListCreateAPIView):
-    queryset = Disease.objects.all()
+    queryset = Disease.objects.all().order_by("-id")
     serializer_class = DiseaseSerializer
 
 

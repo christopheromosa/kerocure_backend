@@ -9,7 +9,7 @@ from rest_framework.response import Response
 
 
 class ConsultationViewSet(ModelViewSet):
-    queryset = PhysicianNote.objects.all()
+    queryset = PhysicianNote.objects.all().order_by('-note_id') 
     serializer_class = ConsultationSerializer
 
     def perform_create(self, serializer):
