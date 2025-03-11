@@ -125,17 +125,19 @@ def pharmacy_patients(request):
     return Response(serializer.data)
 
 
+
 @api_view(["GET"])
 def billing_patients(request):
     """
-    Fetch patients whose visit's current_state is 'pharmacy' and next_state is 'billing'.
+    Fetch patients whose visit's current_state is 'PHARMACY' or 'CONSULTATION' and next_state is 'BILLING'.
     """
     today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="PHARMACY",
         next_state="BILLING",
-        # visit_date=today
+        current_state__in=["PHARMACY", "CONSULTATION"],  # Include both states
+        # visit_date=today  # Uncomment if you want to filter by today's date
     ).select_related("patient")
+    
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
     return Response(serializer.data)
