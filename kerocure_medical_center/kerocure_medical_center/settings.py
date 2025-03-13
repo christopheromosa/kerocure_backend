@@ -140,12 +140,11 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = "en-us"
 
 
-TIME_ZONE = "UTC"
 
 USE_I18N = True
 
 TIME_ZONE = "Africa/Nairobi"
-USE_TZ = True
+USE_TZ = False
 
 REST_FRAMEWORK = {
     "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",  # Standardized date format

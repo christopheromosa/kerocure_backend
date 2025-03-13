@@ -162,13 +162,14 @@ def admin_patients(request):
 @api_view(["GET"])
 def get_today_visit(request, patientId):
     today = timezone.now().date()
+    print(today)
     visits = Visit.objects.filter(
         patient=patientId,
         visit_date=today,
     ).order_by(
         "-visit_date"
     )  # Fetch all visits for the day, ordered by creation time
-
+    print(visits)
     if not visits:
         return Response({"error": "No visits found for today"}, status=404)
 
