@@ -37,6 +37,8 @@ env/
 .venv/
 kerocure_venv/
 
+staticfiles/
+
 # Distribution / packaging
 *.egg
 *.egg-info
