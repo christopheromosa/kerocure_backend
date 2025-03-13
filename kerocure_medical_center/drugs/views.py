@@ -8,6 +8,8 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser
 import pandas as pd
 from io import BytesIO
+from rest_framework import status
+from rest_framework.response import Response
 
 class DrugViewSet(ModelViewSet):
     queryset = Drug.objects.all().order_by("-id")
@@ -125,3 +127,19 @@ class UploadDrugStockView(APIView):
             # Log the full error for debugging
             print(f"Error: {str(e)}")
             return JsonResponse({"error": str(e)}, status=400)
+
+
+class DispenseDrugView(APIView):
+    def post(self, request, *args, **kwargs):
+        drug_id = request.data.get('drug_id')
+        quantity_dispensed = request.data.get('quantity_dispensed')
+
+        try:
+            drug = Drug.objects.get(id=drug_id)
+            drug.dispense_drug(quantity_dispensed)
+            drug.save()
+            return Response(DrugSerializer(drug).data, status=status.HTTP_200_OK)
+        except Drug.DoesNotExist:
+            return Response({"error": "Drug not found"}, status=status.HTTP_404_NOT_FOUND)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

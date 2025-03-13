@@ -16,3 +16,8 @@ class DiseaseSearchView(generics.ListAPIView):
     def get_queryset(self):
         query = self.request.query_params.get("search", "")
         return Disease.objects.filter(name__icontains=query)
+
+
+class DiseaseRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Disease.objects.all()
+    serializer_class = DiseaseSerializer
