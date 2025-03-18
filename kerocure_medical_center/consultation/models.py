@@ -10,7 +10,8 @@ class PhysicianNote(models.Model):
     )
 
     triage = models.ForeignKey("triage.Triage", on_delete=models.SET_NULL, null=True)
-    diagnosis = models.TextField()
+    medical_history = models.JSONField(default=list, blank=True, null=True)
+    diagnosis = models.TextField(default=list,blank=True, null=True)
     disease = models.CharField(default="", blank=True)
     prescription = models.JSONField(
         blank=True, null=True
@@ -19,8 +20,8 @@ class PhysicianNote(models.Model):
         default=list, blank=True, null=True
     )  # Storing lab tests ordered as JSON
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, default=200.00)
-    physician = models.ForeignKey(
-        StaffUser, on_delete=models.SET_NULL, null=True, blank=True
+    physician = models.ForeignKey( # Current physician handling the note
+        StaffUser, on_delete=models.SET_NULL, null=True, blank=True,related_name="authored_notes"
     )
     recorded_at = models.DateTimeField(auto_now_add=True)
 

@@ -40,14 +40,15 @@ class UploadDrugStockView(APIView):
 
             # Read the Excel file
             df = pd.read_excel(file)
+            # Normalize column names
+            df.columns = df.columns.str.upper().str.strip()
 
             # Validate the file format
             required_columns = ["DRUG", "COST", "QUANTITY"]
             if not all(column in df.columns for column in required_columns):
+                missing_columns = [col for col in required_columns if col not in df.columns]
                 return JsonResponse(
-                    {
-                        "error": "Invalid file format. Required columns: Drug, Cost, Quantity."
-                    },
+                    {"error": f"Missing columns: {missing_columns}"},
                     status=400,
                 )
 
@@ -56,7 +57,7 @@ class UploadDrugStockView(APIView):
             df = df.dropna(how="all")
 
             # Drop rows where the Cost or Quantity columns are empty
-            df = df.dropna(subset=["COST", "QUANTITY"])
+            df = df.dropna(subset=["COST", "QUANTITY","DRUG"])
 
             # Debugging: Log the cleaned DataFrame
             print("Cleaned DataFrame:")

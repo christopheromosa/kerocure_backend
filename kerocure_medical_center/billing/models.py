@@ -16,6 +16,15 @@ class Billing(models.Model):
     laboratory_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     pharmacy_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    discount_percentage = models.DecimalField(
+            max_digits=5, decimal_places=2, default=0.00
+        )  # New field for discount percentage
+    discount_amount = models.DecimalField(
+            max_digits=10, decimal_places=2, default=0.00
+        )  # New field for discount amount
+    final_cost = models.DecimalField(
+            max_digits=10, decimal_places=2, default=0.00
+        ) 
     recorded_at = models.DateTimeField(auto_now_add=True)
     billed_by = models.ForeignKey(
         StaffUser, on_delete=models.SET_NULL, null=True, blank=True

@@ -34,14 +34,15 @@ class UploadLabTestView(APIView):
 
             # Read the Excel file
             df = pd.read_excel(file)
+            # Normalize column names
+            df.columns = df.columns.str.upper().str.strip()
 
             # Validate the file format
             required_columns = ["SERVICES", "COST", "DURATION"]
             if not all(column in df.columns for column in required_columns):
+                missing_columns = [col for col in required_columns if col not in df.columns]
                 return JsonResponse(
-                    {
-                        "error": "Invalid file format. Required columns: SERVICES, COST, DURATION."
-                    },
+                    {"error": f"Missing columns: {missing_columns}"},
                     status=400,
                 )
 
@@ -50,7 +51,7 @@ class UploadLabTestView(APIView):
             df = df.dropna(how="all")
 
             # Drop rows where the COST column is empty
-            df = df.dropna(subset=["COST"])
+            df = df.dropna(subset=["COST","SERVICES","DURATION"])
 
             # Debugging: Log the cleaned DataFrame
             print("Cleaned DataFrame:")

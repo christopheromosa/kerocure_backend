@@ -12,6 +12,8 @@ from consultation.models import PhysicianNote
 from patients.models import Patient
 from lab.models import LabResult
 from pharmacy.models import Medication
+from departments.models import Department
+from departments.serializers import DepartmentSerializer
 
 
 # Create your views here.
@@ -28,15 +30,8 @@ class VisitViewSet(ModelViewSet):
         patient = serializer.validated_data["patient"]
         today = timezone.now().date()
 
-        # Check if patient already has a visit today
-        existing_visit = Visit.objects.filter(
-            patient=patient, visit_date=today
-        ).exists()
-
-        visit_type = "Revisit" if existing_visit else "Visit"
-
-        # Save the instance with the determined visit_type
-        serializer.save(visit_type=visit_type)
+         # Save the instance with the determined visit_type
+        serializer.save()
 
 
 @api_view(["GET"])
@@ -46,8 +41,8 @@ def triage_patients(request):
     """
     today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="TRIAGE",
         next_state="CONSULTATION",
+        current_state__in=["TRIAGE", "TRANSFERRED"],
         # visit_date=today
     ).select_related("patient", "department")
     patients_data = []
@@ -125,7 +120,6 @@ def pharmacy_patients(request):
     return Response(serializer.data)
 
 
-
 @api_view(["GET"])
 def billing_patients(request):
     """
@@ -137,7 +131,7 @@ def billing_patients(request):
         current_state__in=["PHARMACY", "CONSULTATION"],  # Include both states
         # visit_date=today  # Uncomment if you want to filter by today's date
     ).select_related("patient")
-    
+
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
     return Response(serializer.data)
@@ -180,10 +174,14 @@ def get_today_visit(request, patientId):
         patient = Patient.objects.filter(id=patientId).first()
         lab = LabResult.objects.filter(visit=visit).first()
         medication = Medication.objects.filter(visit=visit).first()
+        department = DepartmentSerializer(visit.department).data
 
         visit_data.append(
             {
                 "visit_id": visit.visit_id,
+                "department": department,
+                "visit_type": visit.visit_type,
+                "transfer_history": visit.transfer_history,
                 "triage_data": (
                     {
                         "triage_id": triage.triage_id,
@@ -218,7 +216,6 @@ def get_today_visit(request, patientId):
                         "patient_id": patient.pk,
                         "first_name": patient.first_name,
                         "last_name": patient.last_name,
-                        "dob": patient.dob,
                         "contact_number": patient.contact_number,
                     }
                     if patient
@@ -263,6 +260,7 @@ def get_patient_history(request, patientId):
             "visit_id": visit.visit_id,
             "visit_date": visit.visit_date,
             "current_state": visit.current_state,
+            "transfer_history": visit.transfer_history,
             "next_state": visit.next_state,
             "total_cost": visit.total_cost,
             "visit_type": visit.visit_type,
@@ -296,15 +294,16 @@ def get_patient_history(request, patientId):
 
 from django.forms.models import model_to_dict
 
+
 @api_view(["GET"])
 def get_visit_details(request, visitId):
     visit = Visit.objects.prefetch_related(
-                "triage",  # Prefetch related Triage objects
-                "consultations",  # Ensure correct related_name for Consultation
-                "labs",  # Ensure correct related_name for Lab
-                "pharmacies",  # Ensure correct related_name for Pharmacy
-                "billings",  # Ensure correct related_name for Billing
-            ).get(visit_id=visitId)
+        "triage",  # Prefetch related Triage objects
+        "consultations",  # Ensure correct related_name for Consultation
+        "labs",  # Ensure correct related_name for Lab
+        "pharmacies",  # Ensure correct related_name for Pharmacy
+        "billings",  # Ensure correct related_name for Billing
+    ).get(visit_id=visitId)
 
     # Use model_to_dict to safely serialize the triage object
     triage_data = model_to_dict(visit.triage) if visit.triage else None
@@ -313,6 +312,8 @@ def get_visit_details(request, visitId):
         "visit_id": visit.visit_id,
         "visit_date": visit.visit_date,
         "visit_type": visit.visit_type,
+        "transfer_history": visit.transfer_history,
+        "department": visit.department.name if visit.department else None,
         "triage": triage_data,
         "consultation": list(visit.consultations.all().values()),
         "lab": list(visit.labs.all().values()),
@@ -340,7 +341,8 @@ def get_all_visits(request):
                 "visit_date": visit.visit_date,
                 "visit_type": visit.visit_type,
                 "department": visit.department.name if visit.department else None,
-                "visit_status":visit.visit_status,
+                "transfer_history": visit.transfer_history,
+                "visit_status": visit.visit_status,
                 "patient_name": f"{visit.patient.first_name} {visit.patient.last_name}",
                 "patient_id": visit.patient.id,
                 "triage": None,
@@ -372,6 +374,7 @@ def get_visits_by_patient_name(request, patient_name):
                 "id": visit.id,
                 "visit_date": visit.visit_date,
                 "visit_type": visit.visit_type,
+                "transfer_history": visit.transfer_history,
                 "patient_name": f"{visit.patient.first_name} {visit.patient.last_name}",
                 "patient_id": visit.patient.id,
                 "triage": list(visit.triage.all().values()),
@@ -383,3 +386,57 @@ def get_visits_by_patient_name(request, patient_name):
         )
 
     return Response(visit_data)
+
+
+@api_view(["POST"])
+def transfer_patient(request):
+    """
+    Transfer a patient from one department to another.
+    """
+    data = request.data
+    visit_id = data.get("visit_id")
+    new_department_id = data.get("new_department_id")
+    referral_reason = data.get("referral_reason", "")
+    transferred_by = data.get(
+        "transferred_by"
+    )  # ID of the doctor initiating the transfer
+
+    try:
+        visit = Visit.objects.get(visit_id=visit_id)
+        new_department = Department.objects.get(id=new_department_id)
+    except Visit.DoesNotExist:
+        return Response({"error": "Visit not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Department.DoesNotExist:
+        return Response(
+            {"error": "Department not found"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Create a new transfer entry with department names
+    transfer_entry = {
+        "from_department": visit.department.name if visit.department else "N/A",
+        "to_department": new_department.name,
+        "reason": referral_reason,
+        "transferred_by": transferred_by,
+        "transferred_at": timezone.now().isoformat(),
+    }
+
+    # Append the new transfer entry to the transfer_history
+    if not visit.transfer_history:
+        visit.transfer_history = []
+    visit.transfer_history.append(transfer_entry)
+
+    # Update the Visit model
+    visit.department = new_department  # Set the new department
+    visit.current_state = "TRANSFERRED"  # Update current state
+    visit.next_state = (
+        "CONSULTATION"  # Set next state to consultation in the new department
+    )
+    visit.save()
+
+    return Response(
+        {
+            "message": "Patient transferred successfully",
+            "transfer_history": visit.transfer_history,  # Return the updated transfer history
+        },
+        status=status.HTTP_200_OK,
+    )
