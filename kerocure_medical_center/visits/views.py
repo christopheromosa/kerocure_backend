@@ -14,6 +14,7 @@ from lab.models import LabResult
 from pharmacy.models import Medication
 from departments.models import Department
 from departments.serializers import DepartmentSerializer
+from django.db.models import Q
 
 
 # Create your views here.
@@ -127,9 +128,11 @@ def billing_patients(request):
     """
     today = timezone.now().date()
     visits = Visit.objects.filter(
-        next_state="BILLING",
-        current_state__in=["PHARMACY", "CONSULTATION"],  # Include both states
-        # visit_date=today  # Uncomment if you want to filter by today's date
+        Q(current_state="PHARMACY", next_state="BILLING")|
+        Q(current_state="CONSULTATION", next_state="LABORATORY")|
+        Q(current_state="CONSULTATION", next_state="PHARMACY")|
+        Q(current_state="CONSULTATION", next_state="BILLING")
+
     ).select_related("patient")
 
     patients = [visit.patient for visit in visits]
@@ -159,7 +162,7 @@ def get_today_visit(request, patientId):
     print(today)
     visits = Visit.objects.filter(
         patient=patientId,
-        visit_date=today,
+        
     ).order_by(
         "-visit_date"
     )  # Fetch all visits for the day, ordered by creation time
@@ -201,6 +204,8 @@ def get_today_visit(request, patientId):
                         "total_cost": consultation.total_cost,
                         "prescription": consultation.prescription,
                         "lab_test_ordered": consultation.lab_tests_ordered,
+                        "lab_tests_paid_status":consultation.lab_tests_paid_status,
+                        "prescription_paid_status":consultation.prescription_paid_status,
                         "physician": (
                             consultation.physician.id
                             if consultation.physician

@@ -13,8 +13,7 @@ class Patient(models.Model):
     age = models.CharField(max_length=255, default="")
     residence = models.CharField(max_length=255, default="")
     contact_number = models.CharField(max_length=15)
-    next_of_kin_name = models.CharField(max_length=255, default="")
-    next_of_kin_contact_number = models.CharField(max_length=15, default="")
+    
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"

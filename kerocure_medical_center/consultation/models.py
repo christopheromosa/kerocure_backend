@@ -24,6 +24,9 @@ class PhysicianNote(models.Model):
         StaffUser, on_delete=models.SET_NULL, null=True, blank=True,related_name="authored_notes"
     )
     recorded_at = models.DateTimeField(auto_now_add=True)
+    prescription_paid_status = models.BooleanField(default=False,null=True)
+    consultation_paid_status = models.BooleanField(default=False,null=True)
+    lab_tests_paid_status = models.BooleanField(default=False,null=True)
 
     def __str__(self):
         return f"Physician Note for Visit ID: {self.visit.visit_id}"

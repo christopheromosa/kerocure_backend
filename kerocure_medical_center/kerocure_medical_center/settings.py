@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     "drugs",
     "departments",
     "disease",
+    "drugSales",
+    "labTestSales",
     "corsheaders",
 ]
 
