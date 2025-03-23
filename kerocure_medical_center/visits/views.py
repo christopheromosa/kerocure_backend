@@ -131,7 +131,9 @@ def billing_patients(request):
         Q(current_state="PHARMACY", next_state="BILLING")|
         Q(current_state="CONSULTATION", next_state="LABORATORY")|
         Q(current_state="CONSULTATION", next_state="PHARMACY")|
-        Q(current_state="CONSULTATION", next_state="BILLING")
+        Q(current_state="CONSULTATION", next_state="BILLING")|
+        Q(current_state="TRIAGE", next_state="CONSULTATION")
+        
 
     ).select_related("patient")
 
@@ -336,7 +338,7 @@ def get_all_visits(request):
     """
     visits = Visit.objects.prefetch_related(
         "triage", "consultations", "labs", "pharmacies", "billings"
-    ).all()
+    ).all().order_by("-visit_date","-visit_id")
 
     visit_data = []
     for visit in visits:
