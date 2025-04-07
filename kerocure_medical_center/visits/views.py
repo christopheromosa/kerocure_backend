@@ -31,7 +31,7 @@ class VisitViewSet(ModelViewSet):
         patient = serializer.validated_data["patient"]
         today = timezone.now().date()
 
-         # Save the instance with the determined visit_type
+        # Save the instance with the determined visit_type
         serializer.save()
 
 
@@ -44,7 +44,7 @@ def triage_patients(request):
     visits = Visit.objects.filter(
         next_state="CONSULTATION",
         current_state__in=["TRIAGE", "TRANSFERRED"],
-        # visit_date=today
+        visit_date=today,
     ).select_related("patient", "department")
     patients_data = []
     for visit in visits:
@@ -68,7 +68,7 @@ def triage_patients_department(request, department_id):
         current_state="TRIAGE",
         next_state="CONSULTATION",
         department=department_id,
-        # visit_date=today
+        visit_date=today,
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -82,9 +82,7 @@ def consultation_patients(request):
     """
     today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="CONSULTATION",
-        next_state="LABORATORY",
-        # visit_date=today
+        current_state="CONSULTATION", next_state="LABORATORY", visit_date=today
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -98,9 +96,7 @@ def lab_patients(request):
     """
     today = timezone.now().date()
     visits = Visit.objects.filter(
-        current_state="LABORATORY",
-        next_state="CONSULTATION",
-        # visit_date=today
+        current_state="LABORATORY", next_state="CONSULTATION", visit_date=today
     ).select_related("patient")
     patients = [visit.patient for visit in visits]
     serializer = PatientSerializer(patients, many=True)
@@ -128,13 +124,11 @@ def billing_patients(request):
     """
     today = timezone.now().date()
     visits = Visit.objects.filter(
-        Q(current_state="PHARMACY", next_state="BILLING")|
-        Q(current_state="CONSULTATION", next_state="LABORATORY")|
-        Q(current_state="CONSULTATION", next_state="PHARMACY")|
-        Q(current_state="CONSULTATION", next_state="BILLING")|
-        Q(current_state="TRIAGE", next_state="CONSULTATION")
-        
-
+        Q(current_state="PHARMACY", next_state="BILLING")
+        | Q(current_state="CONSULTATION", next_state="LABORATORY")
+        | Q(current_state="CONSULTATION", next_state="PHARMACY")
+        | Q(current_state="CONSULTATION", next_state="BILLING")
+        # | Q(current_state="TRIAGE", next_state="CONSULTATION")
     ).select_related("patient")
 
     patients = [visit.patient for visit in visits]
@@ -164,7 +158,6 @@ def get_today_visit(request, patientId):
     print(today)
     visits = Visit.objects.filter(
         patient=patientId,
-        
     ).order_by(
         "-visit_date"
     )  # Fetch all visits for the day, ordered by creation time
@@ -206,8 +199,8 @@ def get_today_visit(request, patientId):
                         "total_cost": consultation.total_cost,
                         "prescription": consultation.prescription,
                         "lab_test_ordered": consultation.lab_tests_ordered,
-                        "lab_tests_paid_status":consultation.lab_tests_paid_status,
-                        "prescription_paid_status":consultation.prescription_paid_status,
+                        "lab_tests_paid_status": consultation.lab_tests_paid_status,
+                        "prescription_paid_status": consultation.prescription_paid_status,
                         "physician": (
                             consultation.physician.id
                             if consultation.physician
@@ -336,9 +329,13 @@ def get_all_visits(request):
     """
     Fetch all visits.
     """
-    visits = Visit.objects.prefetch_related(
-        "triage", "consultations", "labs", "pharmacies", "billings"
-    ).all().order_by("-visit_date","-visit_id")
+    visits = (
+        Visit.objects.prefetch_related(
+            "triage", "consultations", "labs", "pharmacies", "billings"
+        )
+        .all()
+        .order_by("-visit_date", "-visit_id")
+    )
 
     visit_data = []
     for visit in visits:
@@ -347,6 +344,8 @@ def get_all_visits(request):
                 "visit_id": visit.visit_id,
                 "visit_date": visit.visit_date,
                 "visit_type": visit.visit_type,
+                "current_state": visit.current_state,
+                "next_state": visit.next_state,
                 "department": visit.department.name if visit.department else None,
                 "transfer_history": visit.transfer_history,
                 "visit_status": visit.visit_status,
