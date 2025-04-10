@@ -179,6 +179,7 @@ def get_today_visit(request, patientId):
                 "visit_id": visit.visit_id,
                 "department": department,
                 "visit_type": visit.visit_type,
+                "visit_status": visit.visit_status,
                 "transfer_history": visit.transfer_history,
                 "triage_data": (
                     {
